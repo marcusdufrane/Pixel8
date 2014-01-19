@@ -1,0 +1,55 @@
+start tables at address 0
+
+sequence lookup table
+---------------------
+uint16 number of sequences
+uint32 sequence 1 starting address
+uint32 sequence n starting address
+
+0xFFFF reserved as terminator
+
+sequence trigger table
+---------------------
+uint8 number of triggers
+uint16 trigger number, uint16 sequence number, ..., 0xFFFF
+...
+
+**** Data Fields:
+
+rows(uint16),cols(uint16),output_point(uint8),start_led(uint16),flags(uint8)[islooping:0,isinterrupting:1,reserved:2-7]
+row_0_duration(uint32),light_value_0,...,light_value_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols
+...
+row_M_duration(uint32),light_value_0,...,light_value_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols and M == rows
+
+sizes:
+size, in bytes, of a set is: rows * cols * 24 + rows * 4 + 12
+
+so, for example, a "knight rider"-type oscillation with a 100-light strip at maximum smoothness (i.e. a single light lit per row) would 
+  require (200 * 100 * 24) + (200 * 4) + 12 == 480812 bytes, or roughly 0.5MB.  more than 99% of the size of the set comes from the 24-bit light_value_X data
+
+**** Transfer protocol:
+
+bootrom
+  if USB 5V connected
+    foreach second in 1 to 3
+      check for serial data
+      if serial data present
+        receive data directly into bootrom through some protocol (ZMODEM, YMODEM, etc.)
+        reboot
+      else
+        send 'B'
+    boot into application
+ 
+application
+  if USB 5V connected
+    while true
+      check for serial data (first 3 bytes are bytes to receive)
+      if serial data present
+        receive set data into application flash
+        check SHA-1
+        if SHA-1 match
+          send '0001'
+        else
+          send 'FFFF'
+      else
+        send 'A'
