@@ -16,7 +16,8 @@ env.Replace(PROGSUFFIX = '.elf')
 elf = env.Program('#/lib/'+Target, env.Glob('#/src/*.c'))
 
 #generate .hex file
-env.Command('#/lib/'+Target+'.hex', elf, 'avr-objcopy -j .text -j .data -O ihex $SOURCE $TARGET')
+hex = env.Command('#/lib/'+Target+'.hex', elf, 'avr-objcopy -j .text -j .data -O ihex $SOURCE $TARGET')
+env.Default(hex)
 if int(ARGUMENTS.get('send', 0)):
 	#program controller
-	env.Command(None, '#/lib/'+Target+'.hex', 'avrdude -p m328p -c avrispmkII -P usb -U flash:w:$SOURCE -F -V')
+	env.Command(None, hex, 'avrdude -p m328p -c avrispmkII -P usb -U flash:w:$SOURCE -F -V')
