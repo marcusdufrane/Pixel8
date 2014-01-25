@@ -1,4 +1,6 @@
 \lightfiles
+\lib
+.sconsign.dblite
 *.o
 *.elf
 *.hex
