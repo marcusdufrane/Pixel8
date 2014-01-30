@@ -16,10 +16,14 @@ uint16 trigger number, uint16 sequence number, ..., 0xFFFF
 
 **** Data Fields:
 
+header info:
 rows(uint16),cols(uint16),output_point(uint8),start_led(uint16),flags(uint8)[islooping:0,isinterrupting:1,reserved:2-7]
-row_0_duration(uint32),light_value_0,...,light_value_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols
+row_0_duration(uint32),...,row_M_duration(uint32)
+
+image info:
+light_value_0_0,...,light_value_0_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols
 ...
-row_M_duration(uint32),light_value_0,...,light_value_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols and M == rows
+light_value_M_0,...,light_value_M_N, where light_value_X(uint24)[red:0-7,green:8-15,blue:16-23] and N == cols and M == rows
 
 sizes:
 size, in bytes, of a set is: rows * cols * 24 + rows * 4 + 12
