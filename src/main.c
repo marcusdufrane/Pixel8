@@ -13,6 +13,7 @@
 #include "utils.h"
 #include "memoryFunctions.h"
 #include "TestTerminal.h"
+#include "InfoSender.h"
 
 void turnOffWatchDog() __attribute__((naked)) __attribute__((section(".init3")));
 
@@ -33,9 +34,86 @@ int main()
 	stdin = &mystdin;
 	sei();
 	printf("\r\nPixel8\r\n");
-	printf("A Bit Built Technology\n");		
+	printf("A Bit Built Technology\r\n");	
+	int x = 0;
+	//PORTD |= DATA3;
+	PORTD &= ~DATA3;
+	for(;x < 11; x++)
+	{		
+		sendClearMessage();
+		sendClearMessage();
+		sendClearMessage();
+	}
+	
 	while(1)
 	{	
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendClearMessage();	
+	
+	_delay_ms(500);
+	
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	
+	sendClearMessage();	
+	
+	_delay_ms(500);
+	
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendClearMessage();	
+	_delay_ms(500);
+	
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendClearMessage();	
+	_delay_ms(500);
+	
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendLight(0, 0, 0x01, 0);
+	sendLight(0x01, 0, 0, 0);
+	sendLight(0, 0x01, 0, 0);
+	sendClearMessage();	
+	_delay_ms(500);
 		#ifdef DEBUG
 		terminalRun();
 		#else
@@ -51,8 +129,7 @@ int main()
 			{
 				setStatus(STATUS_PROG_ERROR);
 			}
-			//program mode
-			_delay_ms(10000);			
+			//program mode		
 		}
 		else
 		{
