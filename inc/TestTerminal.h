@@ -3,31 +3,15 @@
 #ifndef _TESTTERMINAL_HPP
 #define _TESTTERMINAL_HPP
 
-#include "bbtUart.h"
-
+#define MAX_CMD_NAME 32
 struct Command
 {
-	//command function pointer
-	void *param1;
-	void *param2;
-	void *param3;
-	void *param4;
-	void *param5;
+  char name[MAX_CMD_NAME];
+  int (*CommandFunction)(int argc, char *argv[]);
 };
-
-#define MAX_CMD	255
-char command[MAX_CMD];
 
 // Run the terminal application
 void terminalRun();
-
-// Gets a command from the user
-// The command is stored in the command buffer
-void getCommand();
-
-// Processes the command and calls the correct command from the
-// command list
-void processCommand();
 
 // Add a command to the command list
 // Takes a Command struct pointer
