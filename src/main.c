@@ -35,7 +35,7 @@ task tasks[3];
 const unsigned char tasksNum = 3;
 const unsigned long tasksPeriodGCD = 10;
 const unsigned long period1 = 10;
-const unsigned long period2 = 200;
+const unsigned long period2 = 100;
 const unsigned long period3 = 100;
 
 int TickFct_1(int state);
@@ -160,7 +160,7 @@ int TickFct_1(int state)
     sendLight(value, 0, 0, 0);
     sendClearMessage();
   } 
-  else if (lightstrip_counter == 60)
+  else if (lightstrip_counter == 50)
   {
     sendLight(0, 0, value, 0);
     sendLight(value, 0, 0, 0);
@@ -175,7 +175,7 @@ int TickFct_1(int state)
     
     sendClearMessage();
   }
-  else if (lightstrip_counter == 120)
+  else if (lightstrip_counter == 100)
   {
     sendLight(0, value, 0, 0);
     sendLight(0, 0, value, 0);
@@ -191,7 +191,7 @@ int TickFct_1(int state)
     sendClearMessage();
   } 
   
-  if (++lightstrip_counter >= 180)
+  if (++lightstrip_counter >= 150)
   {
     lightstrip_counter = 0;
   }
