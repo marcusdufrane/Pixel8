@@ -15,6 +15,7 @@
 #include "TestTerminal.h"
 #include "InfoSender.h"
 #include "spi.h"
+#include <string.h>
 
 void turnOffWatchDog() __attribute__((naked)) __attribute__((section(".init3")));
 
@@ -81,7 +82,7 @@ void init_processor()
   /*Set up timer*/
   TCCR1B = (1<<WGM12)|(1<<CS11); // CTC mode (clear timer on compare). Prescaler=8
   // AVR output compare register OCR0.
-  OCR1A = 25000;
+  OCR1A = 18480;
   // AVR timer interrupt mask register         
   TIMSK1 = (1<<OCIE1A); //enables compare match interrupt
   TCNT1 = 0;
@@ -98,6 +99,24 @@ void init_processor()
   //
   //OCR0A = 144;
   //TCCR0B |= 0x05;
+}
+
+int testCommand(const char *args)
+{
+  printf("i am called with '%s'\r\n", args);
+}
+
+uint8_t value = 0x01;
+int lightsCommand(const char *args)
+{
+  if (strlen(args))
+  {
+    value = atoi(args);
+  }
+  else
+  {
+    printf("current lights value: %d\r\n", (int)value);
+  }
 }
 
 int main()
@@ -136,6 +155,16 @@ int main()
   tasks[i].running = 0;
   tasks[i].TickFct = &TickFct_3;
   
+  struct Command test;
+  strcpy(test.name, "test");
+  test.CommandFunction = testCommand;
+  addCommand(&test);
+  
+  struct Command lights;
+  strcpy(lights.name, "lights");
+  lights.CommandFunction = lightsCommand;
+  addCommand(&lights);
+  
   while(1)
   {
   }
@@ -143,7 +172,6 @@ int main()
 
 // Light strip task
 int lightstrip_counter = 0;
-const uint8_t value = 0x01;
 int TickFct_1(int state)
 {
   if (lightstrip_counter == 0)

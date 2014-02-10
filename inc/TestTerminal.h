@@ -7,7 +7,8 @@
 struct Command
 {
   char name[MAX_CMD_NAME];
-  int (*CommandFunction)(int argc, char *argv[]);
+  int (*CommandFunction)(const char *args);
+  struct Command *next;
 };
 
 // Run the terminal application

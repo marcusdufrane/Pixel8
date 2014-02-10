@@ -2,39 +2,32 @@
 
 #include "TestTerminal.h"
 #include "stdio.h"
+#include <string.h>
 
-union InternalCommand;
-
-struct Internal
-{
-  char bytes[sizeof(struct Command)];
-  union InternalCommand *next;
-};
-
-union InternalCommand
-{
-  struct Command *data;
-  struct Internal *internal;
-};
-
-union InternalCommand *head = NULL;
-union InternalCommand *next = NULL;
+struct Command *head;
 
 void addCommand(struct Command *command)
 {
   if (NULL == head)
   {
     // initial command
-    head->data = command;
+    head = command;
+    head->next = NULL;
   }
   else
   {
-    
+    struct Command *current = head;
+    while (current->next != NULL)
+    {
+      current = current->next;
+    }
+    current->next = command;
+    current->next->next = NULL;
   }
 }
 
 #define MAX_CMD_STRING 255
-char command[MAX_CMD_STRING];
+char command_string[MAX_CMD_STRING];
 
 uint16_t currentPlace;
 void getCommand()
@@ -45,11 +38,11 @@ void getCommand()
   while(stillReading)
   {    
     entry = (uint8_t)fgetc(stdin);
-    command[currentPlace] = entry;  
+    command_string[currentPlace] = entry;  
     switch(entry)
     {
       case 13:
-        command[currentPlace] = '\0';
+        command_string[currentPlace] = '\0';
         printf("\r\n");
         stillReading = 0;
         break;
@@ -72,7 +65,7 @@ void getCommand()
     
     if(currentPlace == MAX_CMD_STRING)
     {
-      command[MAX_CMD_STRING - 1] = '\0';
+      command_string[MAX_CMD_STRING - 1] = '\0';
       stillReading = 0;
     }
   }    
@@ -80,7 +73,29 @@ void getCommand()
 
 void processCommand()
 {
-  // look through each 
+  char command_name[MAX_CMD_STRING] = {'\0'};
+  int end_of_command = strcspn(command_string, " \0");
+  strncpy(command_name, command_string, end_of_command);
+  
+  // look through each command, starting with head
+  struct Command *current = head;
+  while (current != NULL)
+  {
+    //printf("checking '%s'...\r\n", current->name);
+    if (0 == strcmp(current->name, command_name))
+    {
+      if (command_string[end_of_command] == '\0')
+      {
+        current->CommandFunction('\0');
+      }
+      else
+      {
+        current->CommandFunction(&command_string[end_of_command + 1]);
+      }
+      return;
+    }
+    current = current->next;
+  }
 }
 
 void terminalRun()
