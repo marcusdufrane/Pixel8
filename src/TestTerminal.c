@@ -30,6 +30,7 @@ void addCommand(struct Command *command)
 char command_string[MAX_CMD_STRING];
 
 uint16_t currentPlace;
+uint8_t enable = 1;
 void getCommand()
 {
   uint8_t entry;
@@ -81,7 +82,6 @@ void processCommand()
   struct Command *current = head;
   while (current != NULL)
   {
-    //printf("checking '%s'...\r\n", current->name);
     if (0 == strcmp(current->name, command_name))
     {
       if (command_string[end_of_command] == '\0')
