@@ -24,7 +24,7 @@ uint8_t rxFile(const char *args)
   return 0;
 }
 
-#define RX() ((uint8_t)fgetc(stdin) - 0x30)
+#define RX() (uint8_t)fgetc(stdin)
 uint8_t runDownload()
 {
   if (0 == downloading_flag)
@@ -33,8 +33,7 @@ uint8_t runDownload()
   }
   
   buffer_size = RX() | (RX() << 8);
-  printf("buffer: %d\r\n", buffer_size);
-  
+
   if (buffer_size > MAX_BUFFER_SIZE)
   {
     printf("NACK");
@@ -67,17 +66,17 @@ uint8_t runDownload()
     // trailing '\0', just write right up to the end of the buffer
     fgets(buffer, buffer_size + 1, stdin);
     
-    crc = 0xFFFF;
-    for (int i = 0; i < buffer_size; ++i)
-    {
-      crc = _crc_ccitt_update(crc, buffer[i]);
-    }
-    
-    if (0 == crc)
-    {
-      printf("NACK");
-      break;
-    }
+    //crc = 0xFFFF;
+    //for (int i = 0; i < buffer_size; ++i)
+    //{
+    //  crc = _crc_ccitt_update(crc, buffer[i]);
+    //}
+    //
+    //if (0 != crc)
+    //{
+    //  printf("NACK");
+    //  break;
+    //}
         
     writeMemoryData(data_index, buffer, buffer_size);
     data_index += buffer_size;
