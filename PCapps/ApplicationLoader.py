@@ -34,8 +34,8 @@ class ApplicationLoader():
         crc = crc16.crc16xmodem(str(x), crc)
       print 'length before crc ' + str(len(data))
       tmp = bytearray(2)
-      tmp[0] = bytes((crc & 0xFF))[0]
-      tmp[1] = bytes(((crc & 0xFF00) >> 8))[0]
+      tmp[0] = crc & 0xFF
+      tmp[1] = (crc & 0xFF00) >> 8
       print 'length after adding crc ' + str(len(data))
       result = 'NACK'
       while result == 'NACK':
