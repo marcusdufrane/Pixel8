@@ -5,6 +5,7 @@
 #include "stdio.h"
 #include "stdint.h"
 #include <string.h>
+#include <util/crc16.h>
 
 #define MAX_BUFFER_SIZE 1024
 uint8_t downloading_flag = 0;
@@ -23,7 +24,7 @@ uint8_t rxFile(const char *args)
   return 0;
 }
 
-#define RX() (uint8_t)fgetc(stdin)
+#define RX() ((uint8_t)fgetc(stdin) - 0x30)
 uint8_t runDownload()
 {
   if (0 == downloading_flag)
@@ -32,6 +33,7 @@ uint8_t runDownload()
   }
   
   buffer_size = RX() | (RX() << 8);
+  printf("buffer: %d\r\n", buffer_size);
   
   if (buffer_size > MAX_BUFFER_SIZE)
   {
@@ -43,12 +45,13 @@ uint8_t runDownload()
     printf("PACK");
   }
   
-  char block_id[3];
+  char block_id[4] = {'\0'};
   char buffer[MAX_BUFFER_SIZE];
-  uint16_t crc;
+  uint16_t crc = 0xFFFF;
   while (1)
   {
     fgets(block_id, sizeof(block_id), stdin);
+
     if (0 == strcmp(block_id, "EOT"))
     {
       printf("PACK");
@@ -60,9 +63,26 @@ uint8_t runDownload()
       break;
     }
     
-    fgets(buffer, buffer_size, stdin);
+    // fgets returns (n+1) bytes.  since we don't care about enforcing a
+    // trailing '\0', just write right up to the end of the buffer
+    fgets(buffer, buffer_size + 1, stdin);
+    
+    crc = 0xFFFF;
+    for (int i = 0; i < buffer_size; ++i)
+    {
+      crc = _crc_ccitt_update(crc, buffer[i]);
+    }
+    
+    if (0 == crc)
+    {
+      printf("NACK");
+      break;
+    }
+        
     writeMemoryData(data_index, buffer, buffer_size);
     data_index += buffer_size;
+    
+    printf("PACK");
   }
   
   return downloading_flag = 0;
