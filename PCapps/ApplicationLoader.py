@@ -10,11 +10,8 @@ class ApplicationLoader():
     self.blockSize = int(blockSize)
     self.blockSize_msb = int((self.blockSize & 0xFF00) >> 8)
     self.blockSize_lsb = int(self.blockSize & 0xFF)
-    print str(self.blockSize_msb)
-    print str(self.blockSize_lsb)
-    self.port = serial.Serial(serialPort, 115200, timeout=1)
+    self.port = serial.Serial(serialPort, 115200, timeout=10)
     self.end_of_file = os.path.getsize(fileName)
-    print self.end_of_file
     
   def start_transfer(self):
     result = ''
@@ -35,14 +32,19 @@ class ApplicationLoader():
       crc = 0
       for x in data:
         crc = crc16.crc16xmodem(str(x), crc)
-      data += bytes(crc & 0xFF)
-      data += bytes((crc & 0xFF00) >> 8)
+      print 'length before crc ' + str(len(data))
+      tmp = bytearray(2)
+      tmp[0] = bytes((crc & 0xFF))[0]
+      tmp[1] = bytes(((crc & 0xFF00) >> 8))[0]
+      print 'length after adding crc ' + str(len(data))
       result = 'NACK'
       while result == 'NACK':
         print "sending:BLK"
         self.port.write('BLK')
         print "sending:",[str(x) for x in data]
         self.port.write(data)
+        print "sending:",[str(x) for x in tmp]
+        self.port.write(tmp)
         result = self.wait_for_response()
       if result == 'PACK':
         data = self.get_data_block()
@@ -52,13 +54,16 @@ class ApplicationLoader():
     return 'DONE'
     
   def get_data_block(self):
+    print 'blocksize:' + str(self.blockSize)
     data = bytearray()
     if self.fileObject.tell() == self.end_of_file:
       return data
     while len(data) < self.blockSize:      
+      print 'get'
       data += (self.fileObject.read(self.blockSize - len(data)))
       if self.fileObject.tell() == self.end_of_file:
         data.append(bytearray(self.blockSize - len(data)))
+    print 'length of data' + str(len(data))
     return data
       
   def wait_for_response(self):
