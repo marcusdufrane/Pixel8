@@ -10,8 +10,10 @@ class ApplicationLoader():
     self.blockSize = int(blockSize)
     self.blockSize_msb = int((self.blockSize & 0xFF00) >> 8)
     self.blockSize_lsb = int(self.blockSize & 0xFF)
-    self.port = serial.Serial(serialPort, 115200, timeout=10)
+    self.port = serial.Serial(serialPort, 115200, timeout=5)
     self.end_of_file = os.path.getsize(fileName)
+    print "end_of_file:",self.end_of_file
+    print "blocks:",(float(self.end_of_file)/float(self.blockSize))
     
   def start_transfer(self):
     result = ''
@@ -41,7 +43,7 @@ class ApplicationLoader():
       while result == 'NACK':
         print "sending:BLK"
         self.port.write('BLK')
-        print "sending:",[str(x) for x in data]
+        #print "sending:",[str(x) for x in data]
         self.port.write(data)
         print "sending:",[str(x) for x in tmp]
         self.port.write(tmp)
@@ -62,7 +64,7 @@ class ApplicationLoader():
       print 'get'
       data += (self.fileObject.read(self.blockSize - len(data)))
       if self.fileObject.tell() == self.end_of_file:
-        data.append(bytearray(self.blockSize - len(data)))
+        data += (bytearray(self.blockSize - len(data)))
     print 'length of data' + str(len(data))
     return data
       
