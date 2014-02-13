@@ -2,6 +2,7 @@
 
 #include "stdio.h"
 #include "stdint.h"
+#include <stdlib.h>
 #include <avr\io.h>
 #include <avr\interrupt.h>
 #include <avr\wdt.h>
@@ -16,6 +17,7 @@
 #include "InfoSender.h"
 #include "spi.h"
 #include <string.h>
+#include "FileRx.h"
 
 void turnOffWatchDog() __attribute__((naked)) __attribute__((section(".init3")));
 
@@ -33,7 +35,7 @@ typedef struct task
 
 task tasks[3];
 
-const unsigned char tasksNum = 3;
+const unsigned char tasksNum = 4;
 const unsigned long tasksPeriodGCD = 10;
 const unsigned long period1 = 10;
 const unsigned long period2 = 100;
@@ -101,13 +103,14 @@ void init_processor()
   //TCCR0B |= 0x05;
 }
 
-int testCommand(const char *args)
+uint8_t testCommand(const char *args)
 {
   printf("i am called with '%s'\r\n", args);
+  return 0;
 }
 
 uint8_t value = 0x01;
-int lightsCommand(const char *args)
+uint8_t lightsCommand(const char *args)
 {
   if (strlen(args))
   {
@@ -117,6 +120,7 @@ int lightsCommand(const char *args)
   {
     printf("current lights value: %d\r\n", (int)value);
   }
+  return 0;
 }
 
 int main()
@@ -130,6 +134,7 @@ int main()
   setStatus(STATUS_GOOD);
   stdout = &mystdout;
   stdin = &mystdin;
+  initFileRx();
   printf("\r\nPixel8\r\n");
   printf("A Bit Built Technology\r\n");
   
@@ -237,6 +242,10 @@ int TickFct_2(int state)
 // terminal task
 int TickFct_3(int state)
 {
-  terminalRun();
+  if (!runDownload())
+  {
+    terminalRun();
+  }
+
   return 0;
 }
