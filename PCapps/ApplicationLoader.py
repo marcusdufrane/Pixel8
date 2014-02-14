@@ -34,18 +34,16 @@ class ApplicationLoader():
       crc = 0
       for x in data:
         crc = crc16.crc16xmodem(str(x), crc)
-      print 'length before crc ' + str(len(data))
       tmp = bytearray(2)
       tmp[0] = crc & 0xFF
       tmp[1] = (crc & 0xFF00) >> 8
-      print 'length after adding crc ' + str(len(data))
       result = 'NACK'
       while result == 'NACK':
         print "sending:BLK"
         self.port.write('BLK')
-        #print "sending:",[str(x) for x in data]
+        print "sending data:",[str(x) for x in data]
         self.port.write(data)
-        print "sending:",[str(x) for x in tmp]
+        print "sending tmp:",[str(x) for x in tmp]
         self.port.write(tmp)
         result = self.wait_for_response()
       if result == 'PACK':
@@ -53,19 +51,17 @@ class ApplicationLoader():
       else:
         #got something weird back, quit early
         return 'FAIL'
+    self.port.write('EOF')
     return 'DONE'
     
   def get_data_block(self):
-    print 'blocksize:' + str(self.blockSize)
     data = bytearray()
     if self.fileObject.tell() == self.end_of_file:
       return data
     while len(data) < self.blockSize:      
-      print 'get'
       data += (self.fileObject.read(self.blockSize - len(data)))
       if self.fileObject.tell() == self.end_of_file:
         data += (bytearray(self.blockSize - len(data)))
-    print 'length of data' + str(len(data))
     return data
       
   def wait_for_response(self):
