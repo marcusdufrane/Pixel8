@@ -22,8 +22,3 @@ uint8_t hasUsb()
 		return 1;
 	return 0;
 }
-
-uint8_t receiveLightData()
-{
-	return 0;
-}
