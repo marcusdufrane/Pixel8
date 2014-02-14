@@ -170,6 +170,12 @@ int main()
   lights.CommandFunction = lightsCommand;
   addCommand(&lights);
   
+  struct Command readMemory;
+  strcpy(readMemory.name, "read_flash");
+  readMemory.CommandFunction = displayMemoryCommand;
+  addCommand(&readMemory);
+  //usage: read_flash {address} {bytes to read}
+  
   while(1)
   {
   }

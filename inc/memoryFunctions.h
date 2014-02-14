@@ -25,5 +25,6 @@ void disableWrite();
 void lockMemory();
 void unlockMemory();
 void eraseMemory();
+void displayMemoryCommand(const char *args);
 
 #endif //_MEMORY_FONCTIONS_HPP
