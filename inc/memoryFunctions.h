@@ -17,7 +17,10 @@ struct MEM_ID
 void configure_memory();
 void writeMemoryData(uint32_t address, uint8_t *data, uint16_t numOfBytes);
 void readMemoryData(uint32_t address, uint8_t *data, uint16_t numOfBytes);
-void readMemoryId(uint8_t *data);
+void readStatus(uint8_t *status);
+void waitForWIP();
+void waitForEnable();
+void readMemoryId();
 void enableMemory();
 void disableMemory();
 void enableWrite();
@@ -25,6 +28,9 @@ void disableWrite();
 void lockMemory();
 void unlockMemory();
 void eraseMemory();
+void resetEnable();
+void resetDevice();
+void eraseSubSector(uint32_t subsector);
 void displayMemoryCommand(const char *args);
 
 #endif //_MEMORY_FONCTIONS_HPP

@@ -130,7 +130,7 @@ int main()
   configure_io();
   configure_UART(115200);
   configure_spi();
-  lockMemory();
+  configure_memory();
   setStatus(STATUS_GOOD);
   stdout = &mystdout;
   stdin = &mystdin;
@@ -175,6 +175,11 @@ int main()
   readMemory.CommandFunction = displayMemoryCommand;
   addCommand(&readMemory);
   //usage: read_flash {address} {bytes to read}
+  
+  eraseSubSector(0);
+  eraseSubSector(1);
+  eraseSubSector(2);
+  waitForWIP();  
   
   while(1)
   {

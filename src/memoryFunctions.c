@@ -4,8 +4,10 @@
 #include "spi.h"
 #include "avr/io.h"
 #include "stdio.h"
+#include "util/delay.h"
 
 #define READ_BUFFER 16
+#define MAX_SUBSECTOR 4095
 
 void configure_memory()
 {
@@ -13,80 +15,140 @@ void configure_memory()
 }
 
 void writeMemoryData(uint32_t address, uint8_t *data, uint16_t numOfBytes)
-{
-  uint8_t addressBytes[4];
+{  
+  printf("address: %i\r\n", address);
   uint16_t counter;
-  addressBytes[1] = (address & 0x00FF0000) >> 16;
-  addressBytes[2] = (address & 0x0000FF00) >> 8;
-  addressBytes[3] = (address & 0x000000FF);  
-  enableWrite();
+  enableWrite();  
+  waitForEnable();
+  
   enableMemory();
   spiWrite(0x02);
-  spiWrite(addressBytes[1]);
-  spiWrite(addressBytes[2]);
-  spiWrite(addressBytes[3]);
+  spiWrite((address & 0xFF0000) >> 16);
+  spiWrite((address & 0xFF00) >> 8);
+  spiWrite(address & 0xFF);
+  
   for(counter = 0; counter < numOfBytes; counter++)
   {
     spiWrite(data[counter]);
   }
   disableMemory();
+  waitForWIP();
+}
+
+void waitForEnable()
+{  
+  enableMemory();
+  spiWrite(0x05);
+  while(!(spiRead() & 0x02)){}
+  disableMemory();
 }
 
 void readMemoryData(uint32_t address, uint8_t *data, uint16_t numOfBytes)
 {
-  uint8_t addressBytes[4];
-  uint16_t counter;
-  addressBytes[1] = (address & 0x00FF0000) >> 16;
-  addressBytes[2] = (address & 0x0000FF00) >> 8;
-  addressBytes[3] = (address & 0x000000FF);
+  uint16_t counter;  
   enableMemory();
   spiWrite(0x03);
-  spiWrite(addressBytes[1]);
-  spiWrite(addressBytes[2]);
-  spiWrite(addressBytes[3]);
-  for(counter = 0; counter < numOfBytes; counter++)
+  spiWrite((address & 0x00FF0000) >> 16);
+  spiWrite((address & 0x0000FF00) >> 8);
+  spiWrite(address & 0x000000FF);
+  
+  for(counter = 0; counter < numOfBytes; ++counter)
   {
     data[counter] = spiRead();
+  }
+  
+  disableMemory();
+}
+
+void readStatus(uint8_t *status)
+{
+  enableMemory();
+  spiWrite(0x05);
+  *status = spiRead();
+  #if DEBUG  
+  printf("Status: %u\r\n", *status); 
+  #endif
+  disableMemory();
+}
+
+void readFlags(uint8_t *flags)
+{
+  enableMemory();
+  spiWrite(0x70);
+  *flags = spiRead();
+  #if DEBUG  
+  printf("Flags: %u\r\n", *flags); 
+  #endif
+  disableMemory();
+}
+
+void readMemoryId()
+{
+  enableMemory();
+  spiWrite(0x9E);
+  uint8_t i = 0;
+  for(;i < 20; ++i)
+  {
+    printf("0x%02X\r\n", spiRead());
   }
   disableMemory();
 }
 
-void readMemoryId(uint8_t *data)
-{
-
-}
-
-void enableMemory()
-{
-  DDRC |= (1 << 0);
-}
-
 void displayMemoryCommand(const char *args)
 {
+  uint8_t status;
+  readStatus(&status);
+  readFlags(&status);
+  if(status & 0x01)
+  {
+    printf("Busy...\r\n");
+    return;
+  }
+   
   uint32_t current;//beginning address
   uint32_t bytesToRead;
-  sscanf(args, "%u %u", &current, &bytesToRead);
-  if(0xFFFFFFFF - current < bytesToRead)
-    bytesToRead = 0xFFFFFFFF - current;  
-  current &= 0xFFFFFF00;
-  uint8_t readsLeft = (bytesToRead/READ_BUFFER) + 1;
-  uint8_t buffer[READ_BUFFER];
+  sscanf(args, "%lu %lu", &current, &bytesToRead);  
+  current &= 0xFFFFFFF0;  
+  uint8_t readsLeft = (bytesToRead/16) + 1;
+  uint8_t buffer[16];
   uint8_t i = 0;
   
   printf("Address    |     0    |    4     |    8     |    C\r\n");
   printf("------------------------------------------------------\r\n");
   while(readsLeft)
   {    
-    readMemoryData(current, buffer, READ_BUFFER);
+    uint16_t value;
+    readMemoryData(current, buffer, 16);
     printf("0x%08x |", current);
-    for(i = 0; i < READ_BUFFER; i += 4)
+    for(i = 0; i < 16; i += 4)
     {
-      printf("0x%08x ", ((uint32_t)(buffer[i] << 24) + (buffer[i+2] << 16) + (buffer[i+1] << 8) + buffer[i+3]));
+      printf("0x%02X%02X%02X%02X ", buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]);
     }
     printf("\r\n");
     current += 16;
     readsLeft--;
   } 
+}
+
+void eraseSubSector(uint32_t subsector)
+{
+  if(subsector > MAX_SUBSECTOR)
+  {
+    printf("failed: %i\r\n", subsector);
+    return;
+  }  
+  enableWrite();
+  enableMemory();
+  spiWrite(0x20);
+  spiWrite((subsector & 0xFF00) >> 8);
+  spiWrite(subsector & 0xFF);
+  spiWrite(0x00);
+  disableMemory();  
+}
+
+void enableMemory()
+{
+  DDRC |= (1 << 0);
 }
 
 void disableMemory()
@@ -96,16 +158,42 @@ void disableMemory()
 
 void enableWrite()
 {
+  uint8_t status;
   enableMemory();
   spiWrite(0x06);
   disableMemory();
+  
+  do
+  {
+    readStatus(&status);
+  }while(~status & 0x02);
+}
+
+void waitForWIP()
+{
+  uint8_t status;
+  do
+  {
+    readStatus(&status);
+    #if DEBUG
+    printf("waiting...\r\n");
+    #endif
+  }while(status & 0x01);
 }
 
 void disableWrite()
 {
-  enableMemory();
   spiWrite(0x04);
-  disableMemory();
+}
+
+void resetEnable()
+{
+  spiWrite(0x66);
+}
+
+void resetDevice()
+{
+  spiWrite(0x99);
 }
 
 void lockMemory()
@@ -120,7 +208,9 @@ void lockMemory()
 
 void unlockMemory()
 {
+  enableMemory();
   enableWrite();
+  disableMemory();
   enableMemory();
   spiWrite(0x01);
   spiWrite(0x00);

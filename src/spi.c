@@ -7,8 +7,8 @@
 void configure_spi()
 {
 	uint8_t tmp;
-	DDRB |= (1 << 2); //configure SS as output		
-	DDRB |= (1 << 3) | (1 << 5);	
+	DDRB |= (1 << 2); //configure SS as output
+	DDRB |= (1 << 3) | (1 << 5);
 	PORTC &= ~(1 << 0);
 	SPCR |= (1 << SPE) | (1 << MSTR);
 	tmp = SPSR;

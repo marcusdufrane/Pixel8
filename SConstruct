@@ -9,7 +9,7 @@ uC = 'atmega328'
 Target = 'pixel8'
 
 env.Replace(CC = 'avr-gcc -mmcu='+uC)
-env.Append(CFLAGS = ['-O2', '-std=gnu99'])
+env.Append(CFLAGS = ['-Os', '-std=gnu99'])
 env.Replace(CPPPATH = '#/inc/')
 env.Replace(CPPDEFINES = ['F_CPU=14745600'])
 env.Replace(PROGSUFFIX = '.elf')
