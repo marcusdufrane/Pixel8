@@ -7,7 +7,7 @@
 #include <string.h>
 #include <util/crc16.h>
 
-#define MAX_BUFFER_SIZE 128
+#define BUFFER_SIZE 256
 uint8_t downloading_flag = 0;
 uint16_t buffer_size;
 uint32_t data_index;
@@ -26,7 +26,7 @@ uint8_t rxFile(const char *args)
 
 uint8_t calcCrc(const char *args)
 {
-  uint8_t data_buffer[MAX_BUFFER_SIZE];
+  uint8_t data_buffer[BUFFER_SIZE];
   int data_bytes = 0;
   int i,j = 0;
   
@@ -43,7 +43,7 @@ uint8_t calcCrc(const char *args)
       ++data_bytes;
     }
     
-    if (data_bytes > MAX_BUFFER_SIZE)
+    if (data_bytes > BUFFER_SIZE)
     {
       printf("too many characters\r\n");
       return 1;
@@ -57,16 +57,16 @@ uint8_t calcCrc(const char *args)
   }
   printf("\r\n");
   
-  writeMemoryData(0, data_buffer, data_bytes);
-  uint8_t read_buffer[MAX_BUFFER_SIZE];
-  readMemoryData(0, read_buffer, MAX_BUFFER_SIZE);
-  
-  printf("read back:");
-  for (int i = 0; i < MAX_BUFFER_SIZE; ++i)
-  {
-    printf("0x%X ", read_buffer[i]);
-  }
-  printf("\r\n");
+  writePage(0, data_buffer, data_bytes);
+  uint8_t read_buffer[BUFFER_SIZE];
+  //readMemoryData(0, read_buffer, BUFFER_SIZE);
+  //
+  //printf("read back:");
+  //for (int i = 0; i < BUFFER_SIZE; ++i)
+  //{
+  //  printf("0x%X ", read_buffer[i]);
+  //}
+  //printf("\r\n");
   
   return 0;
 }
@@ -81,7 +81,7 @@ uint8_t runDownload()
   
   buffer_size = RX() | (RX() << 8);
 
-  if (buffer_size > MAX_BUFFER_SIZE)
+  if (buffer_size > BUFFER_SIZE)
   {
     printf("NACK");
     return downloading_flag = 0;
@@ -92,7 +92,7 @@ uint8_t runDownload()
   }
   
   char block_id[4] = {'\0'};
-  char buffer[MAX_BUFFER_SIZE];
+  char buffer[BUFFER_SIZE];
   uint16_t crc = 0xFFFF;
   
   data_index = 0;
@@ -130,8 +130,8 @@ uint8_t runDownload()
     //  break;
     //}
 
-    writeMemoryData(data_index, buffer, buffer_size);
-    data_index += buffer_size;
+    writePage(data_index, buffer);
+    data_index += 1;
     
     printf("PACK");
   }

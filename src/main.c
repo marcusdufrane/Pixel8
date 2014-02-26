@@ -125,7 +125,6 @@ uint8_t lightsCommand(const char *args)
 
 int main()
 {
-  init_processor();
   wdt_disable();
   configure_io();
   configure_UART(115200);
@@ -179,7 +178,8 @@ int main()
   eraseSubSector(0);
   eraseSubSector(1);
   eraseSubSector(2);
-  waitForWIP();  
+  
+  init_processor();
   
   while(1)
   {

@@ -4,6 +4,8 @@
 
 #include "stdio.h"
 
+#define PAGE_SIZE 256
+
 struct MEM_ID
 {
 	uint8_t manufId;

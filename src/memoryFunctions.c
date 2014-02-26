@@ -14,25 +14,47 @@ void configure_memory()
   DDRC &= ~(1 << 0); //set Memory CS as input(Hi-Z)
 }
 
-void writeMemoryData(uint32_t address, uint8_t *data, uint16_t numOfBytes)
-{  
-  printf("address: %i\r\n", address);
-  uint16_t counter;
-  enableWrite();  
-  waitForEnable();
+void writePage(uint16_t page, uint8_t data[256])
+{
+  //printf("writePage: %d\r\n", page);
   
-  enableMemory();
-  spiWrite(0x02);
-  spiWrite((address & 0xFF0000) >> 16);
-  spiWrite((address & 0xFF00) >> 8);
-  spiWrite(address & 0xFF);
+  // WRITE ENABLE
+  DDRC |= (1 << 0);
+  spiWrite(0x06);
+  DDRC &= ~(1 << 0);
   
-  for(counter = 0; counter < numOfBytes; counter++)
+  // READ STATUS REGISTER
+  DDRC |= (1 << 0);
+  spiWrite(0x05);
+  uint8_t status = spiRead();
+  while ((status & 0x03) != 0x02)
   {
-    spiWrite(data[counter]);
+    status = spiRead();
   }
-  disableMemory();
-  waitForWIP();
+  DDRC &= ~(1 << 0);
+  
+  // PAGE PROGRAM
+  DDRC |= (1 << 0);
+  spiWrite(0x02);
+  spiWrite((page & 0xFF00) >> 8);
+  spiWrite(page & 0xFF);
+  spiWrite(0x00);
+  
+  for(uint16_t index = 0; index < PAGE_SIZE; index++)
+  {
+    spiWrite(data[index]);
+  }
+  DDRC &= ~(1 << 0);
+  
+  // READ STATUS REGISTER
+  DDRC |= (1 << 0);
+  spiWrite(0x05);
+  status = spiRead();
+  while (status & 0x01)
+  {
+    status = spiRead();
+  }
+  DDRC &= ~(1 << 0);
 }
 
 void waitForEnable()
@@ -136,14 +158,44 @@ void eraseSubSector(uint32_t subsector)
   {
     printf("failed: %i\r\n", subsector);
     return;
-  }  
-  enableWrite();
-  enableMemory();
+  }
+  
+  //printf("eraseSubSector %d\r\n", subsector);
+  
+  // WRITE ENABLE
+  DDRC |= (1 << 0);
+  spiWrite(0x06);
+  DDRC &= ~(1 << 0);
+  
+  // READ STATUS REGISTER
+  DDRC |= (1 << 0);
+  spiWrite(0x05);
+  uint8_t status = spiRead();
+  while ((status & 0x03) != 0x02)
+  {
+    status = spiRead();
+  }
+  DDRC &= ~(1 << 0);
+  
+  // SUBSECTOR ERASE
+  DDRC |= (1 << 0);
   spiWrite(0x20);
-  spiWrite((subsector & 0xFF00) >> 8);
-  spiWrite(subsector & 0xFF);
+  spiWrite((subsector >> 4) & 0xFF);
+  spiWrite((subsector << 4) & 0xF0);
   spiWrite(0x00);
-  disableMemory();  
+  DDRC &= ~(1 << 0);
+  
+  // READ STATUS REGISTER
+  DDRC |= (1 << 0);
+  spiWrite(0x05);
+  status = spiRead();
+  while (status & 0x01)
+  {
+    status = spiRead();
+  }
+  DDRC &= ~(1 << 0);
+  
+  //printf("eraseSubSector %d COMPLETE\r\n", subsector);
 }
 
 void enableMemory()
@@ -162,11 +214,7 @@ void enableWrite()
   enableMemory();
   spiWrite(0x06);
   disableMemory();
-  
-  do
-  {
-    readStatus(&status);
-  }while(~status & 0x02);
+  waitForEnable();
 }
 
 void waitForWIP()

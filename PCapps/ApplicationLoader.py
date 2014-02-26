@@ -5,7 +5,7 @@ import serial
 import os
 
 class ApplicationLoader():  
-  def __init__(self, fileName, serialPort, blockSize = 255):
+  def __init__(self, fileName, serialPort, blockSize = 256):
     self.fileObject = open(fileName, 'rb')
     self.blockSize = int(blockSize)
     self.blockSize_msb = int((self.blockSize & 0xFF00) >> 8)
